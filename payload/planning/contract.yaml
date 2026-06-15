@@ -1,0 +1,90 @@
+# =============================================================================
+# planning-worx — MASTER CONTRACT
+# The single source of truth for this project's plan.
+# This file wins over chat history. Re-read it before acting. On any change of
+# direction, update THIS FILE, then re-sync — never let the conversation become
+# the record. `decisions` and `changelog` are append-only (supersede, never edit).
+#
+# Lifecycle: write vision.md, then in `claude` run:
+#   /plan-constitution -> /plan-vision -> /plan-clarify -> /plan-design
+#   -> /plan-tickets -> /plan-analyze   (then /plan-ticket <id> per ticket)
+# `/plan-status` shows progress; `/plan-check` validates this file.
+# =============================================================================
+
+schema_version: "1.0"
+kind: contract
+
+meta:
+  project_id: "my-project"          # lowercase-kebab; set by /plan-vision
+  title: "My Project"
+  status: planning                  # planning | building | shipped | paused
+  stage: constitution               # furthest completed pipeline stage
+  created_at: "1970-01-01"
+  updated_at: "1970-01-01"
+
+# Durable rules, including what NOT to build. Kept short (compliance cliff).
+constitution: []
+  # - { id: CON-1, kind: must,  rule: "Do the simplest thing that meets the acceptance criteria." }
+  # - { id: CON-2, kind: never, rule: "Add a runtime dependency without a decision (ADR)." }
+
+vision:
+  problem: "TODO: what problem, for whom."
+  outcome: "TODO: the change in the world when this works."
+  measurable_goals: []
+  target_users: []
+
+# Project-level negative space — the over-engineering guard.
+non_goals: []
+  # - { id: NG-1, statement: "No multi-tenant support in v1.", rationale: "Single customer until launch." }
+
+constraints: []
+  # - { id: CST-1, statement: "Runs fully offline; no external API calls in the core path." }
+
+tech_stack: []
+  # - { id: TECH-1, name: "TypeScript", version: "5.x", rationale: "...", decision_ref: DEC-1 }
+
+# Flat list of self-similar work nodes. Tree comes from `parent`. kind sets the level.
+# feature -> epic -> ticket -> task. Tickets require acceptance_criteria + engineering_level + priority.
+nodes: []
+  # - id: FEAT-1
+  #   kind: feature
+  #   parent: null
+  #   title: "Account creation"
+  #   intent: "New users can sign up so they can use the product."
+  #   status: todo
+  #   priority: P1
+  # - id: EP-1
+  #   kind: epic
+  #   parent: FEAT-1
+  #   title: "Email/password signup"
+  #   status: todo
+  #   priority: P1
+  # - id: TK-1
+  #   kind: ticket
+  #   parent: EP-1
+  #   title: "Create registration endpoint"
+  #   intent: "A visitor can register with email + password."
+  #   status: todo
+  #   priority: P1
+  #   estimate: M
+  #   engineering_level: mvp
+  #   complexity_budget: "<=150 LOC; stop and ask after 3 failed attempts"
+  #   acceptance_criteria:
+  #     - { given: "a valid, unused email + password", when: "POST /register", then: "201 + user row created" }
+  #     - { given: "an already-registered email",      when: "POST /register", then: "409, no row created" }
+  #   non_goals: ["No social login in this ticket."]
+  #   depends_on: []
+  #   files_in_scope: ["src/routes/register.ts"]
+
+# Open questions, assumptions, risks, issues, dependencies, decisions, deferrals, non-goals.
+# An open_question resolves into a decision / deferral / non_goal. An invalidated
+# assumption becomes a risk. Decisions are append-only — supersede, never edit.
+governance: []
+  # - { id: Q-1, type: open_question, title: "Which email provider?", status: open, scope: EP-1 }
+  # - { id: DEC-1, type: decision, title: "Use Postgres", status: accepted,
+  #     context: "...", decision: "We will use Postgres.", consequences: "..." }
+  # - { id: DEF-1, type: deferral, title: "Anonymous cart sync", status: deferred,
+  #     revisit_trigger: "When we onboard the second customer." }
+
+changelog:
+  - { date: "1970-01-01", version: "0.0", change: "Contract scaffolded by planning-worx.", by: "planning-worx" }

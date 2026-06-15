@@ -1,0 +1,242 @@
+// ============================================================================
+// planning-worx — RESEARCH LOG
+// A living, structured log of research into how to build the planning framework.
+// Deliberately written in the same shape the master contract will take, so this
+// file is itself the first dogfooding test: if the schema can't comfortably
+// describe its own construction, the schema is wrong.
+// ============================================================================
+
+meta:
+  schema_version: "0.1"
+  kind: "research-log"
+  title: "How to build a vision -> atomic-ticket planning framework for AI agents"
+  status: "active"          # active | settled
+  updated: "2026-06-15"
+  owner: "jim"
+  note: >
+    Findings are summarized as claim + source. Full source URLs are in
+    docs/RESEARCH-master-contract.md and the per-thread notes below.
+    Each open_decision is a real fork we still need to resolve together.
+
+// ----------------------------------------------------------------------------
+// THE THROUGH-LINE (what every thread agreed on)
+// ----------------------------------------------------------------------------
+through_line: >
+  Make ONE versioned, structured contract the single source of truth, and write
+  down everything the agent would otherwise decide. Drift, over-engineering, and
+  under-engineering are one disease: ambiguity the agent fills with its own
+  choices. The cure is to leave less ambiguity, tracked in one file, and to feed
+  the agent only the lean slice it needs per task (track maximally, brief
+  minimally). The contract is STATE; a per-ticket plan is a derived, throwaway
+  briefing that is itself a valid slice of the same schema.
+
+// ----------------------------------------------------------------------------
+// RESEARCH THREADS
+// ----------------------------------------------------------------------------
+threads:
+
+  - id: "T1-drift"
+    question: "How do teams prevent scope/architecture drift with AI agents?"
+    status: "done"
+    key_findings:
+      - "Root cause: context window fills, model 'forgets' earlier instructions; worst right after compaction. (Anthropic)"
+      - "Fix: a lean, hard-worded persistent rules file (MUST/NEVER), critical rules first. (Anthropic, amattn)"
+      - "A single versioned spec re-grounds the agent across sessions; when direction changes you update the spec and re-sync, never trust chat history. (Osmani, Spec Kit)"
+      - "Plan-then-execute (Explore->Plan->Implement->Commit); small units each with a RUNNABLE check; 'looks done' is not done. (Anthropic)"
+      - "Adversarial fresh-context review of the diff against the plan; report gaps not style. (Anthropic)"
+    takeaway: "Contract = source of truth; rules file stays lean; gates + runnable checks per unit."
+
+  - id: "T2-spec-frameworks"
+    question: "What proven spec/planning formats exist, and what fields do they track?"
+    status: "done"
+    key_findings:
+      - "GitHub Spec Kit: constitution -> specify -> clarify -> plan -> tasks -> analyze -> implement; each a Markdown artifact feeding the next."
+      - "AWS Kiro: requirements.md (EARS) -> design.md -> tasks.md, with status + dependency 'waves'."
+      - "ADR (Nygard): title/status/context/decision/consequences; append-only, supersede don't edit."
+      - "RFC: author/date/status/reviewers + motivation + alternatives + success_metrics + risks + open_questions."
+      - "Traceability matrix: every requirement links forward to design->code->test (bi-directional)."
+      - "Gherkin: Given/When/Then acceptance criteria. Story mapping: activities->tasks->stories + releases/MVP."
+      - "OpenAPI: schema-as-contract; info/paths/components; reuse by $ref + stable IDs."
+    takeaway: "Common field skeleton: meta/status, intent/why, requirements+acceptance, design, decisions+alternatives, tasks+deps, traceability refs, risks/open-questions, releases."
+
+  - id: "T3-over-under-eng"
+    question: "How to prevent over- AND under-engineering with agents?"
+    status: "done"
+    key_findings:
+      - "Agents over-engineer by default (1000 LOC for a 100-LOC job, framework when you asked for a log line)."
+      - "Negative constraints measurably cut errors; 'spec the negative space' — out-of-scope is as important as in-scope."
+      - "Compliance cliff: past ~12-15 rules / ~200 lines the agent ignores the rules file ('curse of instructions')."
+      - "GitHub 2,500-repo study: a 'Boundaries' section (Always / Ask-first / Never) is the highest-value field."
+      - "Acceptance criteria must be testable (EARS/Gherkin) — the under-engineering guard."
+      - "complexity_budget (max attempts/tokens) stops the debug spiral; engineering_level right-sizes the build."
+    takeaway: "Guardrail fields earn their place: non_goals, boundaries(always/ask/never), constraints/constitution, engineering_level, complexity_budget, testable acceptance_criteria. Keep agent-facing lists SHORT."
+
+  - id: "T4-ssot"
+    question: "How are single-source-of-truth living tracking files structured & kept in sync?"
+    status: "done"
+    key_findings:
+      - "SSOT is a practice: one authoritative home; trackers/dashboards are projections, never competing originals."
+      - "Split MUTABLE current-state (status, %) from IMMUTABLE history (decisions, changelog) inside the same file."
+      - "Minimal proven issue schema (Linear): id + title + status required; priority/estimate/assignee/relations optional."
+      - "Proven status enum w/ categories: Backlog->Todo->In Progress->Done->Canceled (categories enable rollups)."
+      - "Sync = upsert-by-external-id (idempotent), + updated_at + conflict rule ('last updated wins'). Avoids duplicates."
+      - "Low-tech markdown/YAML in git captures ~70% of spec-tooling value, no platform needed."
+    takeaway: "One file, mutable/immutable split, stable IDs, computed rollups, idempotent sync."
+
+  - id: "T5-decomposition"
+    question: "How to go vision -> atomic tickets, and how to know when to STOP splitting?"
+    status: "done"
+    key_findings:
+      - "HTN: split compound tasks until 'primitive' (directly executable). Type-based stop, no size notion."
+      - "WBS: '100% rule' (children sum to 100% of parent) + '8/80 rule' size sanity bound."
+      - "Agile: theme->epic->story->task; boundary = 'fits one sprint' + passes INVEST."
+      - "ADaPT (2024): decompose ONLY when executor fails / self-flags too-complex — atomicity is capability-relative."
+      - "One-PR/one-concern: atomic = single responsibility, independently mergeable, doesn't break build."
+    takeaway: >
+      Recommended hybrid: agile hierarchy for NAMES; ADaPT as-needed recursion for the CONTROL LOOP
+      (don't pre-split everything); stop predicate = single responsibility + completable & self-verifiable
+      in one agent pass + independently testable/mergeable. 100% rule = completeness check.
+
+  - id: "T6-atomic-ticket"
+    question: "What makes a ticket atomic & 'ready' for one agent pass?"
+    status: "done"
+    key_findings:
+      - "INVEST (Wake 2003): Independent, Negotiable, Valuable, Estimable, Small, Testable. Weight Small/Testable/Independent for near-term agent work."
+      - "Vertical slice (touches all layers for observable value), NOT horizontal (one layer)."
+      - "Splitting patterns: SPIDR (Cohn) + Lawrence's 9 patterns; meta-pattern = find core complexity, reduce variations to one."
+      - "Definition of Ready gate + Definition of Done gate; right-size over estimate (humans can't estimate past ~2 days)."
+      - "For agents: 'implementable and testable in isolation', fits one context window; acceptance criteria = the done-check."
+    proposed_readiness_predicate:
+      - "WHO/WHAT/WHY all present (user_role, outcome, value)"
+      - ">=1 acceptance criterion, each binary/observable (reject 'fast'/'better')"
+      - "is_vertical_slice == true"
+      - "fits_in_one_pass == true (single responsibility / one PR)"
+      - "no live dependencies (depends_on empty or all done)"
+      - "files_in_scope bounded; required_context scoped (not 'the whole spec')"
+      - "boundaries.never populated (at minimum 'never commit secrets')"
+    takeaway: "Encode DoR as a computable predicate; failing it routes to the splitter."
+
+  - id: "T7-governance"
+    question: "How to track open questions, deferrals, assumptions, risks, decisions as a living record?"
+    status: "done"
+    key_findings:
+      - "RAID log = Risks/Assumptions/Issues/Dependencies; per-item: id, description, owner, date, priority, status, action."
+      - "Risk vs issue: risk = future uncertainty (mitigate); issue = present reality (resolve)."
+      - "ADR decisions: append-only, immutable once accepted; reverse via a NEW superseding record."
+      - "Deferral ('later', carries a REQUIRED revisit_trigger) vs non-goal ('never' for this scope, carries rationale + periodic review)."
+      - "Assumption log: status open/validated/invalidated; failed assumption MIGRATES to the risk register."
+    lifecycle_edges:
+      - "open_question -> decision | deferral | non_goal"
+      - "assumption -> (invalidated) -> risk -> (materializes) -> issue"
+      - "decision -> superseded_by -> decision"
+    proposed_governance_model: >
+      One governance_item base with a `type` discriminator
+      [open_question, assumption, risk, issue, dependency, decision, deferral, non_goal],
+      per-type status enums, supersedes/converted_from links, REQUIRED owner + date_raised,
+      REQUIRED revisit_trigger on deferrals. Decisions append-only; the rest mutable.
+    takeaway: "The interconversion EDGES are the design crux — model them, so no ambiguity stays unowned."
+
+  - id: "T8-representation"
+    question: "How should the contract be represented (recursive/flat, file layout, format, IDs, versioning)?"
+    status: "done"
+    key_findings:
+      - "JSON Schema recursion via $ref:'#': one self-similar node nests to any depth."
+      - "Flat list + parent_id (+ materialized path) = best git/agent behavior: localized diffs, cheap reorder/reparent. Nested = readable but big-block diffs. Nested-set = write-heavy trap."
+      - "Single file = alignment but a merge bottleneck at scale; file-per-ticket + index = fewer conflicts."
+      - "YAML for authoring (comments, anchors), JSON for sync; conversions are lossy (anchors/comments don't round-trip). Watch YAML 'Norway problem' — quote enum strings."
+      - "COMPUTE rollups from leaf status; never hand-store parent %."
+      - "schema_version + expand-and-contract + upgrade-on-read for migrations. ULID/UUIDv7 for merge-safe sortable IDs."
+      - "Real tools converge on K8s/Backstage envelope (apiVersion/kind/metadata/spec) + one-record-per-file/line (Taskwarrior, Nx, Backstage, GitHub issue forms, Spec Kit)."
+    takeaway: "Recursive node + `kind` discriminator (conditional if/then validation per level); store flat with parent_id + path; compute rollups; versioned envelope."
+
+  - id: "T9-pipeline"
+    question: "How to chain multiple planning skills with gates, and package them?"
+    status: "done"
+    key_findings:
+      - "Anthropic: a staged planner is a WORKFLOW (prompt-chaining + gates), not an autonomous agent — predictable & consistent."
+      - "Gates = programmatic checks between steps; orchestrator-workers when subtasks can't be predicted in advance."
+      - "Spec Kit gates: /clarify (ambiguity), /analyze (read-only cross-artifact consistency; CRITICAL blocks). Kiro gates = optional human checkpoints by default."
+      - "Skills run in main context (cheap, shared); subagents get fresh isolated context (use for heavy stages: design, decompose)."
+      - "Claude Code: commands are user-invoked, skills are model-invoked, subagents live in .claude/agents/. Ship as a plugin (skills+agents+commands) and/or npm."
+      - "Idempotent stages: keyed update-in-place, never append; a stage_status map tracks downstream staleness."
+    recommended_pipeline:
+      - "0 constitution   (skill, once)         -> writes principles/constitution"
+      - "1 ingest+vision  (skill)               -> writes vision + requirements/features   | GATE: ambiguity"
+      - "2 clarify        (skill)               -> resolves open_questions                  | GATE: zero unresolved blockers"
+      - "3 tech+design    (subagent, fresh ctx) -> writes tech_stack + design + ADRs        | GATE: every requirement maps to a design element"
+      - "4 epics+tickets  (subagent, decompose) -> writes epics -> tickets (atomic)         | GATE: coverage — every ticket traces to a requirement (blocks invented scope)"
+      - "5 analyze        (skill, read-only)    -> writes analysis_report only              | GATE: no CRITICAL findings; constitution not violated"
+      - "6 ticket-plan    (skill, per ticket)   -> expands ONE ticket into atomic tasks     | same schema, the lean briefing"
+    takeaway: "Entrypoint = /plan slash command; cheap stages = skills; heavy stages = subagents; every stage reads whole contract, writes its section, idempotent."
+
+// ----------------------------------------------------------------------------
+// EMERGING DESIGN (my synthesized leaning — subject to the open decisions below)
+// ----------------------------------------------------------------------------
+emerging_design:
+  container: "One master YAML contract, K8s/Backstage-style envelope (schema_version + kind + metadata + spec). YAML authoring, JSON Schema validation."
+  node_model: "Recursive self-similar `node` with a `kind` discriminator (project|feature|epic|ticket|task|task-step); fields optional-by-level via conditional validation. SAME schema for ingestion and ticket-plans."
+  storage: "Flat list of nodes + parent_id + materialized path. Rollups computed, never stored."
+  mutable_vs_immutable: "Mutable: node status/%, governance item status. Immutable/append-only: decisions, changelog."
+  guardrails_per_node: "non_goals, constraints, engineering_level, complexity_budget, boundaries(always/ask_first/never)."
+  acceptance: "Given/When/Then, machine-checkable; doubles as Definition of Done."
+  traceability: "Every node carries refs up (parent) and out (design_refs/code_refs/test_refs) + requirement_ids for coverage gate."
+  governance_layer: "Unified governance_item base (open_question/assumption/risk/issue/dependency/decision/deferral/non_goal), lifecycle edges modeled, owner+date required, revisit_trigger required on deferrals."
+  pipeline: "Prompt-chaining workflow with hard gates; skills for cheap stages, subagents for design + decompose; /plan entrypoint."
+  briefing_principle: "Track maximally in the contract; per task derive a lean slice (one ticket + its criteria + non_goals + constraints + relevant decisions) to stay under the compliance cliff."
+  packaging: "npm package that scaffolds the framework into a repo: lean CLAUDE.md + contract + JSON Schema + .claude/skills + .claude/agents. Dogfooded by planning-worx itself."
+
+// ----------------------------------------------------------------------------
+// OPEN DECISIONS (the real forks — let's resolve these next)
+// ----------------------------------------------------------------------------
+open_decisions:
+
+  - id: "OD1-ids"
+    question: "ID scheme: human-readable prefixes (TK-12) vs merge-safe sortable IDs (ULID/UUIDv7)?"
+    tradeoff: "Prefixes are easy for humans/agents to reference but can collide on parallel branch merges. ULIDs are merge-safe & sortable but opaque."
+    leaning: "Hybrid: human-readable prefix for display (TK-12) + an immutable ULID as the true key. Best of both; small extra field cost."
+    status: "open"
+
+  - id: "OD2-file-layout"
+    question: "Single master file now, or file-per-ticket + index from the start?"
+    tradeoff: "Single file = simplest, best alignment, fine for solo/small. File-per-ticket = fewer merge conflicts at scale, more overhead."
+    leaning: "Start single-file; define a clean split path (index + nodes/) we can graduate to. Don't pay the overhead early."
+    status: "open"
+
+  - id: "OD3-gate-hardness"
+    question: "Are gates hard blocks or advisory?"
+    tradeoff: "Hard blocks guarantee quality but can frustrate; advisory is flexible but lets drift through."
+    leaning: "Hard-block only on CRITICAL + coverage (every ticket traces to a requirement); everything else advisory with a recorded override."
+    status: "open"
+
+  - id: "OD4-node-typing"
+    question: "One recursive node type w/ conditional per-level validation, vs distinct types per level?"
+    tradeoff: "Recursive = uniform tooling, Jim's 'same schema everywhere', arbitrary depth, but looser per-level validation. Distinct = strict validation, rigid depth, duplicated structure."
+    leaning: "Recursive + `kind` discriminator + if/then conditional required-fields. Matches the dogfooding goal."
+    status: "open"
+
+  - id: "OD5-governance-placement"
+    question: "Governance items inline on each node, or a central governance log with node_ref scope?"
+    tradeoff: "Inline = locality (everything about a ticket in one place). Central = queryable across the project, easier lifecycle/rollup, models edges cleanly."
+    leaning: "Central governance log with a `scope`/node_ref, so items are queryable and convertible; nodes link to them by id."
+    status: "open"
+
+  - id: "OD6-decompose-loop"
+    question: "Pre-decompose the whole tree up front, or ADaPT-style as-needed (split only when a unit is too complex)?"
+    tradeoff: "Up-front = full visibility/estimation early but risks over-planning & speculative tickets. As-needed = avoids over/under-planning but tree is partially lazy."
+    leaning: "Decompose to ticket level up front (so there's an atomic backlog to pick from — Jim's core goal), then ADaPT as-needed from ticket -> task-steps at execution time."
+    status: "open"
+
+  - id: "OD7-package-shape"
+    question: "Ship as npm only, Claude plugin only, or both?"
+    tradeoff: "npm = broad/agent-agnostic, manual invocation. Plugin = Claude-native auto-invocation + marketplace. Both = max reach, more maintenance."
+    leaning: "npm package is the deliverable Jim named; structure it so the same skills/agents also work as a Claude plugin later."
+    status: "open"
+
+// ----------------------------------------------------------------------------
+// NEXT STEPS (not started — still planning)
+// ----------------------------------------------------------------------------
+next_steps:
+  - "Resolve OD1-OD7 with Jim."
+  - "Draft the JSON Schema for the recursive node + governance_item (no build of the package yet)."
+  - "Write one worked example: a tiny vision -> contract, to pressure-test the schema."
+  - "Only then scaffold the npm package (CLAUDE.md + contract + schema + skills + agents)."
