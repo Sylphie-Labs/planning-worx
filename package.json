@@ -1,6 +1,6 @@
 {
   "name": "@sylphie-labs/planning-worx",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Spec-driven planning for Claude Code: turn a product vision into an atomic, traceable ticket list, with one YAML contract as the single source of truth. Installs planning commands, skills, an adversarial red-team agent, and contract-validation hooks.",
   "bin": {
     "planning-worx": "bin/cli.js"
