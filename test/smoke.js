@@ -29,6 +29,13 @@ ok('CLAUDE.md import injected', fs.readFileSync(path.join(tmp, 'CLAUDE.md'), 'ut
 ok('scaffold validates', run('validate.js', [], tmp).code === 0);
 ok('vision gate fails on placeholders', run('gate_check.js', ['vision'], tmp).code === 1);
 
+// regression: hooks.json must nest events under a top-level `hooks` key (plugin schema)
+const hooks = JSON.parse(fs.readFileSync(path.join(tmp, '.claude', 'planning-worx-plugin', 'planning-worx', 'hooks', 'hooks.json'), 'utf8'));
+ok('hooks.json wraps events under `hooks`', hooks.hooks && Array.isArray(hooks.hooks.PostToolUse));
+// regression: marketplace plugin `source` must be the string form older clients support
+const mp = JSON.parse(fs.readFileSync(path.join(tmp, '.claude', 'planning-worx-plugin', '.claude-plugin', 'marketplace.json'), 'utf8'));
+ok('marketplace source is a string', typeof mp.plugins[0].source === 'string');
+
 // break the contract → validator must catch it
 const cf = path.join(tmp, 'planning', 'contract.yaml');
 fs.writeFileSync(cf, fs.readFileSync(cf, 'utf8').replace('kind: contract', 'kind: wrong'));

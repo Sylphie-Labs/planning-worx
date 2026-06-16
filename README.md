@@ -45,6 +45,7 @@ This installs (idempotently — safe to re-run to update):
    | `/plan-tickets` | epics → atomic tickets, then red-teamed (via `plan-decomposer` + `plan-reviewer`) |
    | `/plan-analyze` | adversarial cross-artifact audit — find the holes before building |
    | `/plan-ticket <id>` | plan one ticket → task steps + the lean build briefing |
+   | `/plan-reconcile [id]` | verify ticket statuses against the actual repo, fix drift, finish what's not done |
    | `/plan-status` | progress, next ready ticket, blockers |
    | `/plan-check` | validate the contract |
 
