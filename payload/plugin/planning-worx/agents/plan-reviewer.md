@@ -2,6 +2,7 @@
 name: plan-reviewer
 description: Adversarial red-team reviewer that hunts for holes in a plan — coverage gaps, missing/untestable acceptance criteria, unstated assumptions, contradictions, silent scope creep, and unhandled edge cases. Use to audit the contract before building (invoked by /plan-analyze and /plan-tickets), or to red-team a single ticket's plan.
 tools: Read, Bash, Grep, Glob
+model: opus
 ---
 
 # plan-reviewer (red-team)

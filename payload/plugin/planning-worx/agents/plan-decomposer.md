@@ -2,6 +2,7 @@
 name: plan-decomposer
 description: Breaks epics into an atomic, traceable ticket list (and tickets into task steps) in a fresh context, so verbose decomposition doesn't pollute the planner. Invoked by /plan-tickets and /plan-ticket.
 tools: Read, Bash, Grep, Glob
+model: sonnet
 ---
 
 # plan-decomposer

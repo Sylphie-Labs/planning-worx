@@ -2,6 +2,7 @@
 name: plan-architect
 description: Proposes the tech stack and architecture as decisions (ADRs) and breaks features into epics, in a fresh context so implementation bias doesn't leak into the planner. Invoked by /plan-design.
 tools: Read, Bash, Grep, Glob
+model: opus
 ---
 
 # plan-architect
