@@ -35,6 +35,11 @@ ok('hooks.json wraps events under `hooks`', hooks.hooks && Array.isArray(hooks.h
 // regression: marketplace plugin `source` must be the string form older clients support
 const mp = JSON.parse(fs.readFileSync(path.join(tmp, '.claude', 'planning-worx-plugin', '.claude-plugin', 'marketplace.json'), 'utf8'));
 ok('marketplace source is a string', typeof mp.plugins[0].source === 'string');
+// regression: plugin + marketplace versions must track package.json (no stale drift)
+const pkgVer = require(path.join(ROOT, 'package.json')).version;
+const pluginVer = JSON.parse(fs.readFileSync(path.join(tmp, '.claude', 'planning-worx-plugin', 'planning-worx', '.claude-plugin', 'plugin.json'), 'utf8')).version;
+ok('plugin.json version matches package.json', pluginVer === pkgVer);
+ok('marketplace version matches package.json', mp.plugins[0].version === pkgVer);
 
 // break the contract → validator must catch it
 const cf = path.join(tmp, 'planning', 'contract.yaml');
